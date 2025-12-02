@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Blocos com botão Copiar</title>
 
-  <!-- Fonte (fallback) -->
   <link href="https://fonts.googleapis.com/css2?family=Proxima+Nova:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
@@ -18,19 +16,37 @@
     h2{ text-align:center; margin-bottom:10px; }
     .note{ text-align:center; color:#555; font-size:13px; margin-bottom:12px; }
 
-    .block-wrapper{ display:flex; align-items:flex-start; gap:16px; margin:18px 0; }
+    /* Ajuste para mobile: flex-wrap permite quebrar linha se necessário, e centraliza */
+    .block-wrapper{ display:flex; align-items:flex-start; justify-content: center; gap:16px; margin:18px 0; flex-wrap: wrap; }
+    
     .controls{ display:flex; flex-direction:column; gap:8px; min-width:120px; }
     .controls .copy-btn, .controls .print-btn{ padding:8px 12px; border-radius:6px; border:none; cursor:pointer; font-weight:600; color:#fff; }
     .controls .copy-btn{ background:#0b74de; } .controls .copy-btn.copied{ background:#2ecc71; }
     .controls .print-btn{ background:#444; }
 
+    /* --- CORREÇÃO DE RESPONSIVIDADE AQUI --- */
     .block{
-      width:var(--block-w); height:var(--block-h);
+      /* Largura flexível para caber no celular, mas travada no máximo em 540px */
+      width: 100%; 
+      max-width: var(--block-w);
+      
+      /* Altura automática para o texto não vazar se a largura diminuir */
+      height: auto; 
+      min-height: var(--block-h);
+
       background:#fff; border-radius:8px; padding:14px; box-shadow:0 1px 6px rgba(0,0,0,0.08);
       position:relative; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; gap:12px;
+      margin: 0 auto; /* Centraliza se estiver sozinho */
     }
 
-    .image-container{ width:480px; height:540px; background:#fff; border-radius:6px; overflow:hidden; align-self:center; display:flex; justify-content:center; align-items:center; }
+    /* Container de imagem responsivo */
+    .image-container{ 
+      width: 100%;
+      max-width: 480px; 
+      /* Mantém a proporção original 480x540 */
+      aspect-ratio: 480 / 540;
+      background:#fff; border-radius:6px; overflow:hidden; align-self:center; display:flex; justify-content:center; align-items:center; 
+    }
     .image-container img{ width:100%; height:100%; object-fit:contain; background:#fff; display:block; }
 
     .content{ white-space:normal; display:flex; flex-direction:column; gap:10px; font-family:"Proxima Nova",Arial,sans-serif; overflow:auto; }
@@ -42,10 +58,21 @@
     .item.desconto{ font-size:18px; color:#00A650; background:#00A6501A; padding:6px 10px; width:fit-content; border-radius:4px; }
     .item.cupom{ font-size:36px; font-weight:700; }
     .item.frete{ font-size:12px; background:#00A650; color:#fff; padding:4px 8px; border-radius:4px; width:fit-content; }
+    /* Ajuste para quebrar links longos no celular */
     .item.link{ font-size:18px; color:#0066CC; text-decoration:underline; word-break:break-all; }
 
-    @media (max-width:720px){ .block-wrapper{ flex-direction:column; align-items:center; } .controls{ flex-direction:row; gap:8px; } .image-container{ width:320px; height:360px; } }
+    /* Media Query atualizada */
+    @media (max-width:720px){ 
+      .block-wrapper{ flex-direction:column; align-items:center; } 
+      .controls{ flex-direction:row; gap:8px; width: 100%; justify-content: center; margin-bottom: 10px; } 
+      
+      .image-container{ 
+        max-width:320px; 
+        aspect-ratio: 320 / 360; 
+      } 
+    }
 
+    /* O clone de print mantém as propriedades fixas originais para garantir a imagem final correta */
     ._print-clone{ box-sizing:border-box; padding:14px; background:#fff; color:#222; font-family:"Proxima Nova",Arial,sans-serif; font-size:14px; box-shadow:none !important; }
   </style>
 </head>
@@ -78,7 +105,6 @@
       </div>
     </div>
 
-    <!-- blocks 2 & 3 left unchanged for now -->
     <div class="block-wrapper">
       <div class="controls">
         <button class="copy-btn" data-target="block-2">Copiar</button>
@@ -215,8 +241,11 @@
         const dataURL = await convertImgElement(img);
         if (dataURL) {
           img.setAttribute('src', dataURL);
-          img.style.width = (img.closest('.image-container') ? 480 : img.width || 480) + 'px';
-          img.style.height = (img.closest('.image-container') ? 540 : img.height || 540) + 'px';
+          // Set pixel dimensions for the Print clone stability, 
+          // but relying on "contain" inside the canvas generation mainly.
+          const isContainer = img.closest('.image-container');
+          img.style.width = (isContainer ? 480 : img.width || 480) + 'px';
+          img.style.height = (isContainer ? 540 : img.height || 540) + 'px';
           img.style.objectFit = 'contain';
           img.style.display = 'block';
         } else {
@@ -297,6 +326,7 @@
       // 2) Create a visible clone at top-left, hide rest of page for rendering
       const clone = document.createElement('div');
       clone.className = '_print-clone';
+      // Force dimensions on the clone so print is always correct size regardless of screen size
       clone.style.width = requiredW + 'px'; clone.style.height = requiredH + 'px';
       clone.style.position = 'fixed'; clone.style.left = '0px'; clone.style.top = '0px';
       clone.style.zIndex = '999999'; clone.style.opacity = '1'; clone.style.overflow = 'hidden';
