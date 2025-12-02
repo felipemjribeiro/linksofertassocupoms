@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Blocos com botão Copiar</title>
+
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --block-w: 540px;
+      --block-h: 960px;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background:#f7f7f7;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h2 { text-align:center; margin-bottom:10px; }
+    .note { text-align:center; color:#555; font-size:13px; margin-bottom:12px; }
+
+    /* wrapper que contém controles + block ao lado */
+    .block-wrapper {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    /* área dos botões (fora da block) */
+    .controls {
+      display:flex;
+      flex-direction: column;
+      gap:8px;
+      min-width: 120px;
+    }
+
+    .controls .copy-btn,
+    .controls .print-btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .controls .copy-btn { background: #0b74de; }
+    .controls .copy-btn.copied { background: #2ecc71; }
+
+    .controls .print-btn { background: #444; }
+
+    /* O bloco que será printado */
+    .block {
+      width: var(--block-w);
+      height: var(--block-h);
+      background: #fff;
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      position: relative;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* conteúdo do bloco */
+    .content {
+      white-space: pre-wrap;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      color: #222;
+      height: 100%;
+      overflow: auto;
+    }
+
+    /* responsividade: empilha quando for tela pequena */
+    @media (max-width: 720px) {
+      .block-wrapper {
+        flex-direction: column;
+        align-items: center;
+      }
+      .controls { flex-direction: row; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h2>Lista de ofertas</h2>
+    <div class="note">Cada bloco tem tamanho fixo <strong>540×960</strong>. Botões ficam fora do bloco; clique <strong>Print</strong> para salvar a imagem.</div>
+
+    <!-- EXEMPLO: Bloco 1 (controls fora da block) -->
+    <div class="block-wrapper">
+      <div class="controls">
+        <button class="copy-btn" data-target="block-1">Copiar</button>
+        <button class="print-btn" data-target="block-1">Print</button>
+      </div>
+
+      <div class="block" id="block-1" aria-label="bloco 1">
+        <div class="content">
+➡️ Kit 3 Squishy Brinquedo Apertar Taba Squishies Bichinho Moji
+✅ Mais de +1000 ★★★★★
+📈De R$ 39,90
+💵Por: R$ 24,9 (50% OFF)
+🏷 Cupom: XXXX
+🚛 Frete Grátis
+🛒https://mercadolivre.com/sec/2ECowoD
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloco 2 -->
+    <div class="block-wrapper">
+      <div class="controls">
+        <button class="copy-btn" data-target="block-2">Copiar</button>
+        <button class="print-btn" data-target="block-2">Print</button>
+      </div>
+
+      <div class="block" id="block-2" aria-label="bloco 2">
+        <div class="content">
+➡️ Kit 2 Refil Filtro Compátivel Purificador Consul CPB34AS CPB34AF CPC31AB CPC31AF
+✅ Mais de +0 vendidos ★★★★★
+📈De R$ 89,90
+💵Por: R$ 52,43 (38% OFF)
+🚛 Frete Grátis
+🛒https://mercadolivre.com/sec/1wCg2Z8
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloco 3 -->
+    <div class="block-wrapper">
+      <div class="controls">
+        <button class="copy-btn" data-target="block-3">Copiar</button>
+        <button class="print-btn" data-target="block-3">Print</button>
+      </div>
+
+      <div class="block" id="block-3" aria-label="bloco 3">
+        <div class="content">
+➡️ Tag De Localização Rastreador Para Objetos Pessoais Criança Cor Branco
+✅ Mais de +1000 ★★★★★
+📈De R$ 49,95
+💵Por: R$ 33,99 (31% OFF)
+🚛 Frete Grátis
+🛒https://mercadolivre.com/sec/1Rx2tjy
+        </div>
+      </div>
+    </div>
+
+    <!-- Você pode replicar o bloco-wrapper para cada item -->
+  </div>
+
+  <!-- SCRIPTS: copiar e print -->
+  <script>
+    // COPIAR
+    document.addEventListener('click', async function(e) {
+      const btn = e.target.closest('.copy-btn');
+      if (!btn) return;
+
+      const targetId = btn.getAttribute('data-target');
+      const block = document.getElementById(targetId);
+      if (!block) return;
+
+      const contentEl = block.querySelector('.content');
+      const text = contentEl ? contentEl.innerText.trim() : '';
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+
+        btn.classList.add('copied');
+        const original = btn.innerText;
+        btn.innerText = 'Copiado!';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.innerText = original;
+        }, 1400);
+      } catch (err) {
+        alert('Não foi possível copiar: ' + err);
+      }
+    });
+
+    // PRINT (exporta a div.block exatamente em 540x960)
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.print-btn');
+      if (!btn) return;
+
+      const targetId = btn.getAttribute('data-target');
+      const block = document.getElementById(targetId);
+      if (!block) return;
+
+      // Garantir que o block tem as dimensões corretas (CSS já define essas medidas)
+      // Para evitar scroll interno aparecendo no print, escondemos overflow temporariamente.
+      const content = block.querySelector('.content');
+      const prevOverflow = content ? content.style.overflow : '';
+      if (content) content.style.overflow = 'hidden';
+
+      // html2canvas: para garantir a imagem com 540x960 px finais,
+      // definimos width/height nas opções baseadas no CSS pixels.
+      // scale = 1 (1 CSS px = 1 device px). Se quiser maior resolução, mude scale para 2.
+      const opts = {
+        width: block.offsetWidth,
+        height: block.offsetHeight,
+        windowWidth: block.offsetWidth,  // evita problemas com largura da janela
+        windowHeight: block.offsetHeight,
+        scale: 1,
+        useCORS: true,
+        backgroundColor: null
+      };
+
+      html2canvas(block, opts).then(canvas => {
+        if (content) content.style.overflow = prevOverflow;
+
+        // Caso o canvas não tenha exatamente 540x960 (improvável), redimensionamos para garantir.
+        const requiredW = 540;
+        const requiredH = 960;
+        let finalCanvas = canvas;
+        if (canvas.width !== requiredW || canvas.height !== requiredH) {
+          // criar novo canvas com tamanho exato
+          const tmp = document.createElement('canvas');
+          tmp.width = requiredW;
+          tmp.height = requiredH;
+          const ctx = tmp.getContext('2d');
+          // desenhar o original escalado para o tamanho requerido
+          ctx.drawImage(canvas, 0, 0, requiredW, requiredH);
+          finalCanvas = tmp;
+        }
+
+        const link = document.createElement('a');
+        link.download = `print-${targetId}.png`;
+        link.href = finalCanvas.toDataURL('image/png');
+        link.click();
+      }).catch(err => {
+        if (content) content.style.overflow = prevOverflow;
+        alert('Erro ao gerar o print: ' + err);
+      });
+    });
+  </script>
+</body>
+</html>
